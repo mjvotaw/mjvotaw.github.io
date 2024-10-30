@@ -1,0 +1,13 @@
+baseURL: https://mjvotaw.github.io/
+languageCode: en-us
+title: Mike
+theme: ["PaperMod"]
+params:
+  homeInfoParams:
+    Title: "Talking about Myself is Weird"
+    Content: "and makes me very uncomfortable. I don't want to be uncomfortable with it anymore."
+  socialIcons:
+    - name: "github"
+      url: "https://github.com/mjvotaw"
+    - name: "linkedin"
+      url: "https://www.linkedin.com/in/mjvotaw/"

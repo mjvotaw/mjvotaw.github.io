@@ -1,0 +1,8 @@
+.DS_Store
+.vscode/
+
+### Hugo ###
+
+/public/
+/resources/_gen
+/.hugo_build.lock
