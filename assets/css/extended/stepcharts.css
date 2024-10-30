@@ -1,0 +1,184 @@
+.step-chart-container.steps-type-dance-single
+{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.sc-header
+{
+  display: flex;
+}
+
+.sc-receptor {
+  background-image: url('/images/stepcharts/receptor.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  width: 64px;
+  height: 64px;
+}
+
+.sc-receptor.left {
+  transform: rotate(0deg);
+}
+
+.sc-receptor.down {
+  transform: rotate(270deg);
+}
+
+.sc-receptor.up {
+  transform: rotate(90deg);
+}
+
+.sc-receptor.right
+{
+  transform: rotate(180deg);
+}
+
+.sc-row 
+{
+  display: flex;
+  height: 64px;
+}
+
+.sc-body.quantization-8 .sc-row:not(:first-child)
+{
+  margin-top: -32px;
+}
+
+.sc-body.quantization-16 .sc-row:not(:first-child)
+{
+  margin-top: -48px;
+}
+
+
+.sc-arrow
+{
+  width: 64px;
+  height: 64px;
+  position: relative;
+}
+
+
+.sc-arrow::before
+{
+  content: attr(data-foot);
+  position: absolute;
+  display: block;
+  bottom: 0px;
+  right: 0px;
+}
+
+
+.sc-arrow-sprite
+{
+  width: 64px;
+  height: 64px;
+  background-position: 0px 0px;
+}
+
+.sc-arrow.left .sc-arrow-sprite
+{
+  transform: rotate(90deg);
+}
+
+.sc-arrow.down .sc-arrow-sprite
+{
+  transform: rotate(0deg);
+}
+
+.sc-arrow.up .sc-arrow-sprite
+{
+  transform: rotate(180deg);
+}
+
+.sc-arrow.right .sc-arrow-sprite
+{
+  transform: rotate(270deg);
+}
+
+.sc-body.animate .sc-arrow-sprite
+{
+  animation: arrow-animation-x 0.5s steps(4) infinite, arrow-animation-y 2s steps(4) infinite;
+}
+
+.beat-subdivision-4th .sc-arrow-sprite
+{
+  background-image: url('/images/stepcharts/Down Tap Note 4th 4x4.png');
+}
+
+.beat-subdivision-8th .sc-arrow-sprite
+{
+  background-image: url('/images/stepcharts/Down Tap Note 8th 4x4.png');
+}
+
+.beat-subdivision-12th .sc-arrow-sprite
+{
+  background-image: url('/images/stepcharts/Down Tap Note 12th 4x4.png');
+}
+
+.beat-subdivision-16th .sc-arrow-sprite
+{
+  background-image: url('/images/stepcharts/Down Tap Note 16th 4x4.png');
+}
+
+@keyframes arrow-animation-x
+{
+  from {
+    background-position-x: 0px;
+  }
+
+  to {
+    background-position-x: -256px;
+  }
+}
+
+@keyframes arrow-animation-y
+{
+  from {
+    background-position-y: 0%;
+  }
+  to {
+    background-position-y: -256px;
+  }
+}
+
+
+.sc-hold-head
+{
+  display: block;
+  position: absolute;
+  width: 64px;
+  height: 32px;
+  top: 32px;
+  background-image: url("/images/stepcharts/hold-body.png");
+  background-size: cover;
+  z-index: -1;
+}
+
+.sc-hold-tail
+{
+  width: 64px;
+  height: 64px;
+  background-image: url("/images/stepcharts/hold-tail.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+/* sc-arrow-type-2 = hold head */
+
+
+/* sc-arrow-type-3 = hold/roll tail */
+
+/* sc-arrow-type-4 = roll head */
+
+/* sc-arrow-type-M = mine */
+
+.sc-mine-sprite
+{
+  width: 64px;
+  height: 64px;
+  background-image: url("/images/stepcharts/mine.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
