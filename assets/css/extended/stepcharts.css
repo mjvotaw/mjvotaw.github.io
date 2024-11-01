@@ -1,7 +1,17 @@
 :root {
   --arrow-size: 64px;
   --column-count: 4;
+  --stage-arrow-size: 64px;
 }
+
+/* Container and header */
+
+.sc-main-wrapper
+{
+  display: flex;
+  gap: calc(var(--arrow-size) / 4);
+}
+
 .step-chart-container
 {
   position: relative;
@@ -23,36 +33,28 @@
 }
 
 .sc-receptor.left {
-  transform: rotate(0deg);
+  transform: rotate(90deg);
 }
 
 .sc-receptor.down {
-  transform: rotate(270deg);
+  transform: rotate(0deg);
 }
 
 .sc-receptor.up {
-  transform: rotate(90deg);
+  transform: rotate(180deg);
 }
 
 .sc-receptor.right
 {
-  transform: rotate(180deg);
+  transform: rotate(270deg);
 }
 
-.sc-row 
-{
-  display: flex;
-  height: var(--arrow-size);
-}
 
-.sc-body.quantization-8 .sc-row:not(:first-child)
-{
-  margin-top: calc(var(--arrow-size) / -2);
-}
+/* Arrows, holds etc */
 
-.sc-body.quantization-16 .sc-row:not(:first-child)
+.sc-body
 {
-  margin-top: calc(var(--arrow-size) * -0.75);
+  position: relative;
 }
 
 
@@ -152,6 +154,12 @@
 
 /* Holds */
 
+/* sc-arrow-type-2 = hold head */
+/* sc-arrow-type-4 = roll head */
+/* sc-arrow-type-3 = hold/roll tail */
+/* sc-arrow-type-M = mine */
+/* sc-arrow.note-type-H = hold body */
+
 .sc-arrow.note-type-H
 {
   z-index: -1;
@@ -162,19 +170,19 @@
   z-index: -2;
 }
 
-.sc-hold-head
+.sc-hold-head, .sc-roll-head
 {
   display: block;
   position: absolute;
   width: var(--arrow-size);
-  height: (var(--arrow-size) / 2);
+  height: calc(var(--arrow-size) / 2);
   bottom: 0px;
   background-image: url("/images/stepcharts/hold-body.png");
   background-size: cover;
   z-index: -1;
 }
 
-.sc-hold-body
+.sc-hold-body, .sc-roll-body
 {
   display: block;
   width: var(--arrow-size);
@@ -182,10 +190,12 @@
   background-image: url("/images/stepcharts/hold-body.png");
   background-size: cover;
   background-position: center;
+  position: absolute;
   z-index: -1;
+  bottom: 0px;
 }
 
-.sc-hold-tail
+.sc-hold-tail, .sc-roll-tail
 {
   width: var(--arrow-size);
   height: var(--arrow-size);
@@ -193,14 +203,7 @@
   background-size: contain;
   background-repeat: no-repeat;
 }
-/* sc-arrow-type-2 = hold head */
 
-
-/* sc-arrow-type-3 = hold/roll tail */
-
-/* sc-arrow-type-4 = roll head */
-
-/* sc-arrow-type-M = mine */
 
 .sc-mine-sprite
 {
@@ -225,4 +228,81 @@
   100% {
     transform: rotate(360deg);
   }
+}
+
+
+/* Stage */
+
+.sc-stage-container
+{
+  display: flex;
+  flex-wrap: nowrap;
+  height: calc(var(--stage-arrow-size) * 3);
+  position: relative;
+}
+.sc-stage
+{
+  position: relative;
+  width: calc(var(--stage-arrow-size) * 3);
+  height: calc(var(--stage-arrow-size) * 3);
+  background-color: #8a8b8b;
+}
+
+.sc-stage-arrow
+{
+  width: var(--stage-arrow-size);
+  height: var(--stage-arrow-size);
+  background-image: url('/images/stepcharts/stage-arrow.png');
+  background-size: cover;
+  position: absolute;
+}
+
+
+.sc-stage-arrow.left
+{
+  transform: rotate(90deg);
+  top: var(--stage-arrow-size);
+  left: 0px;
+}
+
+.sc-stage-arrow.down
+{
+  transform: rotate(0deg);
+  top: calc(var(--stage-arrow-size) * 2);
+  left: var(--stage-arrow-size);
+}
+
+.sc-stage-arrow.up
+{
+  transform: rotate(180deg);
+  top: 0px;
+  left: var(--stage-arrow-size);
+}
+
+.sc-stage-arrow.right
+{
+  transform: rotate(270deg);
+  top: var(--stage-arrow-size);
+  left: calc(var(--stage-arrow-size) * 2);
+}
+
+
+.sc-foot
+{
+  height: calc(var(--stage-arrow-size) * 0.8);
+  width: calc(var(--stage-arrow-size) * 0.8 * 0.41);
+  background-size: contain;
+  background-repeat: no-repeat;
+  z-index: 2;
+  position: absolute;
+}
+
+.sc-foot.left
+{
+  background-image: url('/images/stepcharts/left-foot.png');
+}
+
+.sc-foot.right
+{
+  background-image: url('/images/stepcharts/right-foot.png');
 }
