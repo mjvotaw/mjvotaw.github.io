@@ -11,3 +11,9 @@ params:
       url: "https://github.com/mjvotaw"
     - name: "linkedin"
       url: "https://www.linkedin.com/in/mjvotaw/"
+
+markup:
+  defaultMarkdownHandler: goldmark
+  goldmark:
+    renderer:
+      unsafe: true

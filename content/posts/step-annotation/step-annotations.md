@@ -2,30 +2,36 @@
 draft: false
 params:
   author: Mike Votaw
-title: Step Annotations and Stuff
+title: Predicting Foot Placement for 4-Panel Dance Game Step Charts
 ---
 
-```stepchart {quantization=8}
+```stepchart {{showstage=true}}
 
-1000
-0102
-00M3
-0001
+0100
+2010
+00M0
+3101
 
 ```
 
-# what is this 
 
 this write up is just as much for me as it is anyone else who's interested in implementing something like this
 
+## Terms and Other Information
+
+
+If you're not already familiar with ITG, the short explanation is that it's a dance game that's [very similar](https://en.wikipedia.org/wiki/Konami_Corp._v._Roxor_Games_Inc.) to Dance Dance Revolution.
 
 # okay cool but why
 
 https://itgwiki.dominick.cc/en/meta/what-is-itg
 
-# All the difficulties in predicting this
+## What's so hard about this?
 
-In general, predicting how a player will move to a step chart isn't that difficult. 
+For simple cases, predicting a player's movement isn't actually all that difficult. There's a few assumptions that we can make that help 
+
+- We can assume that the player will want to be facing towards the screen
+- 
 
 One core assumption being made is that the player will want to be facing forward. 
 
@@ -49,44 +55,45 @@ Footswitches vs Jacks typically rely on in-chart notation of having a mine place
 Holdswitches break the assumption that a foot holding a note will remain stationary
 
 
-# describe the algorithm 
+## Terms and Data Structures
 
-terms:
-columns (referred to as 'tracks' within most of Stepmania's code)
-rows: the set of notes that are being pressed at the same time at a given point in time
+Before getting too deep into things, let's define some terms:
+
+- **columns**:  (referred to as 'tracks' within most of Stepmania's code)
+- rows: the set of notes that are being pressed at the same time at a given point in time
 
 StageLayout: contains information about the layout of the dance pad for a given StepsType
  - number of columns for this StepsType
  - position of each arrow
  - which arrows are considered 'up', 'down', or 'side' arrows
 
+## General Explanation
 
-A naive approach would be to try to determine the best possible position for each row individually, based on the determined best position of the previous row. But then you're unable to correct mistakes if you find yourself in an awkward position a few rows later.
-
-Instead, I opted to build a graph, with each node representing a possible position at a certain moment in time. 
-This actually ended up working out really well. 
-
-The data is, by its very nature, strictly ordered. Nodes for a given row will only point to nodes for the next row. It ends up being a very tidy directed acyclic graph.
-
-https://en.wikipedia.org/wiki/Directed_acyclic_graph
-
-Which means we can build the graph and determine the cheapest path through it in linear time. which is pretty cool.
+The general idea is that we need to build a graph, with each node representing one possible foot placement for a given point in time, and each edge representing the difficulty of moving from one position to the next. So there's two interesting parts to this: determining the possible foot placements for a given row, and calculating a cost for moving from one placement to another.
 
 
-The basic algorithm looks like:
+## Determining possible foot placements
 
-Create an initial Start Node, that represents some time before the first row of the step chart, with a State gives the player no particular starting position.
+For the vast majority of steps in a step chart, we really only have to possible foot placements: the player presses the note either with their left foot, or with their right. This applies to single notes and non-bracketable jumps. But, as I mentioned earlier, brackets make all of this more complicated.
 
-For each row in the step chart, do the following:
-- Determine all of the physically possible foot placements to satisfy the notes on that row
-- For each node of the previous row:
-  - iterate through each possible foot placement, doing the following:
-    - based on the state of the given previous node, generate a result state
-    - calculate the cost of moving from the previous state to this new state
-    - create a new node for this result state (or find an existing node already using that state), and add an edge from the previous node to this result node, with the calculated cost
+With a single bracketable jump, we now have 6 possible foot placements: 
 
-Once the last row has been completed, create an End Node, which represents the moment after the last note of the step chart. Attach all of the nodes from the last row to this final row, with a cost of 0.
+<div class="row">
+<div class="col">
 
+```stepchart {size=32}
+
+0101 Ll
+```
+
+</div>
+<div class="col">
+asdfdsfd
+</div>
+<div class="col">
+asdfsadf
+</div>
+</div>
 
 How to generate foot placement permutations:
 
