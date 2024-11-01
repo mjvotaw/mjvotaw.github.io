@@ -17,7 +17,7 @@ Available attributes:
 quantization= 4 | 8 | 16 (defualt 4)
 stepstype= "dance-single" | "dance-double" (default "dance-single")
 animate= true | false (default false)
-
+maxvisiblerows= number (default 0 = "no limit") (this only sort of works)
 
 If you want to display foot placement, include that after the row, like:
 
@@ -40,19 +40,43 @@ In an ideal world, this will display foot placement on a dance stage when animat
 
   */ -}}
 
-{{- /* */ -}}
+{{- /* Set up constants and dicts of data and stuff */ -}}
+{{- $arrowSize := 64 -}}
 {{- $maxQuantization := 16 -}}
 {{- $defaultQuantization := 4 -}}
 {{- $arrowIndexes := slice "left" "down" "up" "right" "left" "down" "up" "right" -}}
 {{- $subdivisionIndexes := slice "4th" "16th" "8th" "16th" -}}
 {{- $stepTypeColumnCounts := dict "dance-single" 4 "dance-double" 8 -}}
 
+{{- /* Pull data from Attributes */ -}}
 {{- $animate := .Attributes.animate | default false -}}
 {{- $stepsType := .Attributes.stepstype | default "dance-single" -}}
 {{- $quantization := math.Min $maxQuantization (.Attributes.quantization | default $defaultQuantization) -}}
+{{- $maxVisibleRows := .Attributes.maxvisiblerows | default 0 -}}
+
+{{- /* And then compute other stuff based on all of them */ -}}
 {{- $columnCount := index $stepTypeColumnCounts $stepsType -}}
 
+{{- /*
+  $rowSpacing is the distance between each row. At $quantization=4, it is equal to $arrowSize,
+  at $quantization=8 it's equal to $arrowSize / 2, etc.
+  */ -}}
+  
+{{- $rowSpacing := math.Mul $arrowSize (math.Div $defaultQuantization $quantization) -}}
+  
+{{- $initialOffset := $arrowSize -}}
 {{- $rows := strings.Split (strings.Trim .Inner " \r\n\t") "\n" -}}
+{{- $rowCount := len $rows -}}
+{{- if eq $maxVisibleRows 0 -}}
+  {{- $maxVisibleRows = $rowCount -}}
+{{- end -}}
+
+{{- /* 
+  Calculate the height of the container, which is going to be:
+  $containerHeight = ($maxVisibleRows * $rowSpacing) + (3 * $arrowSize)
+  (adding 3 * arrowSize to account for the receptors, and the height of the first and last rows)
+  */ -}}
+{{- $containerHeight := math.Add $arrowSize $arrowSize $arrowSize (math.Mul $maxVisibleRows $rowSpacing) }}
 
 {{- /* 
   Each beat is subdivided into 4 spots, 
@@ -62,14 +86,28 @@ In an ideal world, this will display foot placement on a dance stage when animat
   2 = 8th note
   3 = 16th note
   
-  We're using beatIndex % defaultQuantization to determine the beat-subdivision for each row,
+  We're using $beatIndex % (len $subdivisionIndexes) to determine the beat-subdivision for each row,
   which is what determines what color notes to show.
   
+  Maybe a better name for this would be like $tickCount or something, since it's not really related to beats at all
   */ -}}
 {{- $sixteenthsPerRow := math.Div $maxQuantization $quantization -}}
+{{- $beatsPerRow := math.Div (math.Div $maxQuantization $defaultQuantization) $quantization -}}
 {{- $beatIndex := 0 -}}
+{{- $rowIndex := 0 -}}
+{{- /*
+  Because SM notation only indicates when a hold starts and ends, we need to keep track of if a given column is holding.
+  And let's keep track of the type, so we can show holds and rolls correctly
+  */ -}}
+{{- $columnHoldType := newScratch -}}
 
-<div class="step-chart-container steps-type-{{$stepsType}}">
+<div class="step-chart-container steps-type-{{$stepsType}} {{ if $animate }} animate {{ end }}" 
+style="
+--arrow-size: {{$arrowSize}}px; 
+--column-count: {{$columnCount}};
+--row-spacing: {{$rowSpacing}}px;
+height: {{$containerHeight}}px;
+">
   
   {{- if eq $stepsType "dance-single"}}
   <div class="sc-header">
@@ -91,10 +129,11 @@ In an ideal world, this will display foot placement on a dance stage when animat
   </div>
   {{- end -}}
 
-  <div class="sc-body quantization-{{ $quantization }} {{ if $animate }} animate {{ end }}">
+  <div class="sc-body quantization-{{ $quantization }}">
   {{- range $rows -}}
-    {{- $subdivision := index $subdivisionIndexes (math.Mod $beatIndex $defaultQuantization) -}}
-    <div class="sc-row beat-subdivision-{{ $subdivision }}" data-beat-index="{{ $beatIndex }}" data-beat-subdivision="{{ $subdivision }}">
+    {{- $subdivision := index $subdivisionIndexes (math.Mod $beatIndex (len $subdivisionIndexes)) -}}
+    {{- $beat := math.Mul $rowIndex $beatsPerRow -}}
+    
       {{- /* Split the row into pieces. 
         We want to get the first $columnCount pieces, 
         that tells us where to show arrows. 
@@ -117,42 +156,79 @@ In an ideal world, this will display foot placement on a dance stage when animat
         in $footPlacements. 
         */ -}} 
 
-      {{- $footPlacementss := slice -}}
+      {{- $footPlacements := slice -}}
       {{- $fpIndex := 0 -}}
       {{- range seq 0 (math.Sub $columnCount 1) -}}
         {{- $noteType := index $columns . -}}
         {{- if and (ne $noteType "0") (lt $fpIndex (len $footPlacementList)) -}}
-          {{- $footPlacementss = $footPlacementss | append (index $footPlacementList $fpIndex) -}}
+          {{- $footPlacements = $footPlacements | append (index $footPlacementList $fpIndex) -}}
           {{- $fpIndex = add $fpIndex 1 -}}
         {{- else -}}
-          {{- $footPlacementss = $footPlacementss | append "" -}}
+          {{- $footPlacements = $footPlacements | append "" -}}
         {{- end -}}
       {{- end -}}
 
       {{- range seq 0 (math.Sub $columnCount 1) -}}
         {{- $columnIndex := . -}}
         {{- $noteType := index $columns . -}}
-        
-        {{- $footPlacement := index $footPlacementss $columnIndex -}}
-        
-        <div class="sc-arrow {{ index $arrowIndexes $columnIndex }}" data-foot="{{ $footPlacement }}" data-note-type="{{ $noteType }}">
-          {{- if eq $noteType "1" -}}
-          <div class="sc-arrow-sprite"></div>
+        {{- /* If $noteType == 0, check if we're holding a note in this column, and if so,
+        set this to "H" */ -}}
+        {{- if and (eq $noteType "0") ($columnHoldType.Get (string $columnIndex)) -}}
+          {{- $noteType = "H" -}}
+        {{- end -}}
+
+        {{- if ne $noteType "0" -}}
+          {{- $footPlacement := index $footPlacements $columnIndex -}}
+          
+          <div class="sc-arrow 
+          {{ index $arrowIndexes $columnIndex }} 
+          beat-subdivision-{{ $subdivision }}
+          note-type-{{ $noteType }}
+          " 
+          data-beat-index="{{ $beatIndex }}" 
+          data-beat="{{ $beat }}"
+          data-subdivision="{{ $subdivision }}"
+          data-foot="{{ $footPlacement }}" 
+          data-note-type="{{ $noteType }}"
+          style="
+          top: {{ math.Add $initialOffset (math.Mul $rowSpacing $rowIndex) }}px;
+          left: {{ math.Mul $arrowSize $columnIndex}}px;
+          "
+          >
+            {{- if eq $noteType "1" -}}
+              <div class="sc-arrow-sprite"></div>
+            {{- end -}}
+            {{- if eq $noteType "2" -}}
+              {{- $columnHoldType.Set (string $columnIndex) $noteType -}}
+              <div class="sc-arrow-sprite"></div>
+              <div class="sc-hold-head"></div>
+            {{- end -}}
+            {{- if eq $noteType "4" -}}
+              {{- $columnHoldType.Set (string $columnIndex) $noteType -}}
+              <div class="sc-arrow-sprite"></div>
+              <div class="sc-roll-head"></div>
+            {{- end -}}
+            {{- if eq $noteType "3" -}}
+              {{- $columnHoldType.Delete (string $columnIndex) -}}
+              <div class="sc-hold-tail"></div>
+            {{- end -}}
+            {{- if eq $noteType "M" }}
+              <div class="sc-mine-sprite"></div>
+            {{- end -}}
+            {{- if eq $noteType "H" -}}
+              {{- if eq ($columnHoldType.Get (string $columnIndex)) "2" -}}
+                <div class="sc-hold-body"></div>
+              {{- else -}}
+                <div class="sc-roll-body"></div>
+              {{- end -}}
+            {{- end -}}
+          </div>
+
           {{- end -}}
-          {{- if or (eq $noteType "2") (eq $noteType "4") -}}
-          <div class="sc-arrow-sprite"></div>
-          <div class="sc-hold-head"></div>
-          {{- end -}}
-          {{- if eq $noteType "3" -}}
-          <div class="sc-hold-tail"></div>
-          {{- end -}}
-          {{- if eq $noteType "M" }}
-          <div class="sc-mine-sprite"></div>
-          {{- end -}}
-        </div>
       {{- end -}}
-    </div>
+
     {{- $beatIndex = math.Add $beatIndex $sixteenthsPerRow -}}
+    {{- $rowIndex = math.Add $rowIndex 1 -}}
   {{- end -}}
   </div>
 </div>

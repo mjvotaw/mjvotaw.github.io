@@ -1,8 +1,12 @@
-.step-chart-container.steps-type-dance-single
+:root {
+  --arrow-size: 64px;
+  --column-count: 4;
+}
+.step-chart-container
 {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  position: relative;
+  width: calc(var(--arrow-size) * var(--column-count));
+  overflow: hidden;
 }
 
 .sc-header
@@ -14,8 +18,8 @@
   background-image: url('/images/stepcharts/receptor.png');
   background-size: contain;
   background-repeat: no-repeat;
-  width: 64px;
-  height: 64px;
+  width: var(--arrow-size);
+  height: var(--arrow-size);
 }
 
 .sc-receptor.left {
@@ -38,25 +42,25 @@
 .sc-row 
 {
   display: flex;
-  height: 64px;
+  height: var(--arrow-size);
 }
 
 .sc-body.quantization-8 .sc-row:not(:first-child)
 {
-  margin-top: -32px;
+  margin-top: calc(var(--arrow-size) / -2);
 }
 
 .sc-body.quantization-16 .sc-row:not(:first-child)
 {
-  margin-top: -48px;
+  margin-top: calc(var(--arrow-size) * -0.75);
 }
 
 
 .sc-arrow
 {
-  width: 64px;
-  height: 64px;
-  position: relative;
+  width: var(--arrow-size);
+  height: var(--arrow-size);
+  position: absolute;
 }
 
 
@@ -69,12 +73,15 @@
   right: 0px;
 }
 
+/* Tap Arrows */
 
 .sc-arrow-sprite
 {
-  width: 64px;
-  height: 64px;
+  width: var(--arrow-size);
+  height: var(--arrow-size);
   background-position: 0px 0px;
+  background-size: calc(var(--arrow-size) * 4);
+  z-index: 1;
 }
 
 .sc-arrow.left .sc-arrow-sprite
@@ -97,7 +104,7 @@
   transform: rotate(270deg);
 }
 
-.sc-body.animate .sc-arrow-sprite
+.step-chart-container.animate .sc-arrow-sprite
 {
   animation: arrow-animation-x 0.5s steps(4) infinite, arrow-animation-y 2s steps(4) infinite;
 }
@@ -129,37 +136,59 @@
   }
 
   to {
-    background-position-x: -256px;
+    background-position-x: calc(var(--arrow-size) * -4);
   }
 }
 
 @keyframes arrow-animation-y
 {
   from {
-    background-position-y: 0%;
+    background-position-y: 0px;
   }
   to {
-    background-position-y: -256px;
+    background-position-y: calc(var(--arrow-size) * -4);
   }
 }
 
+/* Holds */
+
+.sc-arrow.note-type-H
+{
+  z-index: -1;
+}
+
+.sc-arrow.note-type-3
+{
+  z-index: -2;
+}
 
 .sc-hold-head
 {
   display: block;
   position: absolute;
-  width: 64px;
-  height: 32px;
-  top: 32px;
+  width: var(--arrow-size);
+  height: (var(--arrow-size) / 2);
+  bottom: 0px;
   background-image: url("/images/stepcharts/hold-body.png");
   background-size: cover;
   z-index: -1;
 }
 
+.sc-hold-body
+{
+  display: block;
+  width: var(--arrow-size);
+  height: var(--row-spacing);
+  background-image: url("/images/stepcharts/hold-body.png");
+  background-size: cover;
+  background-position: center;
+  z-index: -1;
+}
+
 .sc-hold-tail
 {
-  width: 64px;
-  height: 64px;
+  width: var(--arrow-size);
+  height: var(--arrow-size);
   background-image: url("/images/stepcharts/hold-tail.png");
   background-size: contain;
   background-repeat: no-repeat;
@@ -175,10 +204,25 @@
 
 .sc-mine-sprite
 {
-  width: 64px;
-  height: 64px;
+  width: var(--arrow-size);
+  height: var(--arrow-size);
   background-image: url("/images/stepcharts/mine.png");
   background-size: contain;
   background-repeat: no-repeat;
+  background-position: center center;
 }
 
+.step-chart-container.animate .sc-mine-sprite
+{
+  animation: mine-rotate 4s steps(32) infinite;
+}
+
+@keyframes mine-rotate
+{
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
