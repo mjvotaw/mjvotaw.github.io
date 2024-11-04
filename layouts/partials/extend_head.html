@@ -1,0 +1,2 @@
+{{ $js := resources.Get "ts/stepcharts/main.ts" | js.Build }}
+<script src="{{ $js.Permalink }}" defer></script>
