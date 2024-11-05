@@ -64,6 +64,10 @@ export function parseStepchart(stepchart: string, quantization: number, maxQuant
     line = line.trim();
     let lineParts = line.replaceAll(whitespace, "").split("");
 
+    if (lineParts.length == 0)
+    {
+      continue;
+    }
     if (lineParts.length < layout.columnCount)
     {
       console.warn(`parseStepchart:: could not parse line "${line}"`);

@@ -1,3 +1,4 @@
+import { buildStageAnimation } from "./StageAnimation";
 import { LAYOUT, StageLayout, StagePoint } from "./StageLayouts";
 import { parseStepchart, NoteType, FootPart, Note, Row } from "./Stepchart";
 
@@ -28,13 +29,20 @@ export class StepchartDisplay
   public xmod: number;
   public animate: boolean;
   public showStage: boolean;
+  public stageArrowSize: number;
 
   public layout: StageLayout;
   public rowSpacing: number;
   public containerHeight: number;
   public rows: Row[] = [];
 
-  private chartContainer: HTMLDivElement;
+  public animationTimeline: any; // anime.js timeline
+  private wrapper: Element;
+  private chartContainer?: HTMLDivElement;
+  private chart: HTMLDivElement;
+  private stageContainer?: HTMLDivElement;
+  private leftFootElem: HTMLDivElement;
+  private rightFootElem: HTMLDivElement;
 
   constructor(
     id: string,
@@ -42,6 +50,7 @@ export class StepchartDisplay
     attributes: Attributes
   )
   {
+    console.log(typeof attributes);
     this.id = id;
     this.stepsType = attributes.stepstype ?? "dance-single";
     this.quantization = attributes.quantization ?? 4;
@@ -50,6 +59,7 @@ export class StepchartDisplay
     this.xmod = attributes.xmod ?? 1;
     this.animate = attributes.animate ?? false;
     this.showStage = attributes.showstage ?? false;
+    this.stageArrowSize = Math.round(this.size * 0.75);
 
     this.layout = LAYOUT[this.stepsType];
     this.rowSpacing = this.size * this.xmod * (DEFAULT_QUANTIZATION / this.quantization);
@@ -61,21 +71,45 @@ export class StepchartDisplay
       this.maxVisibleRows = this.rows.length;
     }
     this.containerHeight = (3 * this.size) + (this.maxVisibleRows * this.rowSpacing);
-    
+
+    const wrapper = document.querySelector(`#${this.id}`);
+    if (!wrapper)
+    {
+      console.error(`StepchartDisplay:: could not find element with id '${this.id}`);
+      return;
+    }
+
+    this.wrapper = wrapper;
+
     this.chartContainer = this.buildChartContainer();
 
     const header = this.buildHeader();
     this.chartContainer.appendChild(header);
 
     const body = this.buildChart();
+    this.chart = body;
     this.chartContainer.appendChild(body);
 
-    const wrapper = document.querySelector(`#${this.id}`);
-    if (wrapper)
+    wrapper.appendChild(this.chartContainer);
+
+    if (this.showStage)
     {
-      wrapper.appendChild(this.chartContainer);
+      console.log('StepchartDisplay:: yeah Im building the stage');
+      this.stageContainer = this.buildStage();
+      wrapper.appendChild(this.stageContainer);
+      this.leftFootElem = this.stageContainer.querySelector(".sc-foot.left");
+      this.rightFootElem = this.stageContainer.querySelector(".sc-foot.right");
+    } 
+
+    if (this.animate)
+    {
+
+      this.animationTimeline = buildStageAnimation(this.rows, this.layout, this.size, this.stageArrowSize, 60, this.chart, this.leftFootElem, this.rightFootElem);
+      console.log(this.animationTimeline);
+      this.animationTimeline.play();
     }
   }
+
 
 
   private buildChartContainer()
@@ -101,6 +135,7 @@ export class StepchartDisplay
     }
     return header;
   }
+
 
   private buildChart()
   {
@@ -148,7 +183,8 @@ export class StepchartDisplay
     noteElem.setAttribute("data-beat", beat.toPrecision(4));
     noteElem.setAttribute("data-foot", note.footPart);
     noteElem.setAttribute("data-note-type", note.type);
-
+    noteElem.setAttribute("data-row", `${rowIndex}`);
+    noteElem.setAttribute("data-column", `${note.column}`);
     noteElem.style.setProperty("left", `${left}px`);
     noteElem.style.setProperty("top", `${top}px`);
 
@@ -187,6 +223,59 @@ export class StepchartDisplay
     }
     return noteElem;
   }
+
+  private buildStage()
+  {
+    let stage = this.createElement("sc-stage");
+
+    // figure out the general layout of this stage, get the max x and y
+    // This is assuming that the bottom-left corner is 0,0
+    let maxX = this.layout.layout.reduce((x, sp) => { return Math.max(x, sp.x);  }, 0);
+    let maxY = this.layout.layout.reduce((y, sp) => { return Math.max(y, sp.y); }, 0);
+    
+    let stageWidth = (maxX + 1) * this.stageArrowSize;
+    let stageHeight = (maxY + 1) * this.stageArrowSize;
+
+    stage.style.setProperty("width", `${stageWidth}px`);
+    stage.style.setProperty("height", `${stageHeight}px`);
+    stage.style.setProperty("--stage-arrow-size", `${this.stageArrowSize}px`);
+
+    for (let c = 0; c < this.layout.layout.length; c++)
+    {
+        let sp = this.layout.layout[c];
+      let arrow = this.createStageArrow(sp, c);
+      stage.appendChild(arrow);
+    }
+
+    let leftFoot = this.createFoot("left", this.layout.startingPositions.left);
+    let rightFoot = this.createFoot("right", this.layout.startingPositions.right);
+
+    stage.appendChild(leftFoot);
+    stage.appendChild(rightFoot);
+    return stage;
+  }
+
+  private createStageArrow(sp: StagePoint, columnIndex: number)
+  {
+    let arrow = this.createElement("sc-stage-arrow", sp.direction);
+    arrow.setAttribute("data-column", `${columnIndex}`);
+    let left = sp.x * this.stageArrowSize;
+    let bottom = sp.y * this.stageArrowSize;
+    arrow.style.setProperty("left", `${left}px`);
+    arrow.style.setProperty("bottom", `${bottom}px`);
+    return arrow;
+  }
+
+  private createFoot(whichFoot: string, startPosition: StagePoint)
+  {
+    let foot = this.createElement("sc-foot", whichFoot);
+    let left = startPosition.x * this.stageArrowSize;
+    let bottom = startPosition.y * this.stageArrowSize;
+    foot.style.setProperty("left", `${left}px`);
+    foot.style.setProperty("bottom", `${bottom}px`);
+    return foot;
+  }
+  
 
   private createElement(...classes: string[])
   {

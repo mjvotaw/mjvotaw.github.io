@@ -237,14 +237,11 @@
 {
   display: flex;
   flex-wrap: nowrap;
-  height: calc(var(--stage-arrow-size) * 3);
   position: relative;
 }
 .sc-stage
 {
   position: relative;
-  width: calc(var(--stage-arrow-size) * 3);
-  height: calc(var(--stage-arrow-size) * 3);
   background-color: #8a8b8b;
 }
 
@@ -287,14 +284,22 @@
 }
 
 
+.sc-foot-container
+{
+  
+  position: absolute;
+  z-index: 2;
+}
+
 .sc-foot
 {
-  height: calc(var(--stage-arrow-size) * 0.8);
-  width: calc(var(--stage-arrow-size) * 0.8 * 0.41);
-  background-size: contain;
+  width: var(--stage-arrow-size);
+  height: var(--stage-arrow-size);
+  background-size: calc(var(--stage-arrow-size) * 0.8 * 0.41);
   background-repeat: no-repeat;
-  z-index: 2;
+  background-position: center;
   position: absolute;
+  z-index: 2;
 }
 
 .sc-foot.left

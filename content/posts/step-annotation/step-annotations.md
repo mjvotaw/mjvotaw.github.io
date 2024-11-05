@@ -5,14 +5,18 @@ params:
 title: Predicting Foot Placement for 4-Panel Dance Game Step Charts
 ---
 
-```stepchart {{showstage=true}}
+<<< Hey there's a stepchart here >>>
 
-0100
-2010
+```stepchart {{showstage=true quantization=8 animate=true}}
+
+0100 L
+2010 LR
 00M0
-3101
+3101 LRr
 
 ```
+
+<<< Hey there's a stepchart here >>>
 
 
 this write up is just as much for me as it is anyone else who's interested in implementing something like this

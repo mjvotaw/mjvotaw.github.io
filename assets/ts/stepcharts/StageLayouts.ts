@@ -1,6 +1,10 @@
-export interface StagePoint {
+export interface BaseStagePoint
+{
   x: number;
   y: number;
+}
+export interface StagePoint extends BaseStagePoint
+{
   direction: string;
 }
 
@@ -11,12 +15,18 @@ export class StageLayout {
   upArrows: number[]
   downArrows: number[]
   sideArrows: number[]
+  startingPositions: {
+    left: StagePoint,
+    right: StagePoint
+  }
   constructor(
     name: string,
     layout: StagePoint[],
     upArrows: number[],
     downArrows: number[],
-    sideArrows: number[]
+    sideArrows: number[],
+    startLeftIndex: number,
+    startRightIndex: number
   ) {
     this.name = name
     this.layout = layout
@@ -24,6 +34,10 @@ export class StageLayout {
     this.upArrows = upArrows
     this.downArrows = downArrows
     this.sideArrows = sideArrows
+    this.startingPositions = {
+      left: layout[startLeftIndex],
+      right: layout[startRightIndex]
+    }
   }
 
   // Returns the cosine of the angle made between the player's 
@@ -101,7 +115,9 @@ export const LAYOUT: { [id: string]: StageLayout } = {
     ],
     [2],
     [1],
-    [0, 3]
+    [0, 3],
+    0,
+    3
   ),
   "dance-double": new StageLayout(
     "dance-double",
@@ -118,6 +134,8 @@ export const LAYOUT: { [id: string]: StageLayout } = {
     ],
     [2, 6],
     [1, 5],
-    [0, 3, 4, 7]
+    [0, 3, 4, 7],
+    0,
+    3
   ),
 }

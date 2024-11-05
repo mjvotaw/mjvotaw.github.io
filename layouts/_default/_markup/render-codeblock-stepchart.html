@@ -44,13 +44,17 @@ In an ideal world, this will display foot placement on a dance stage when animat
   */ -}}
 {{- $content := .Inner -}}
 {{- $id := printf "sc-%s" (crypto.SHA1 (string math.Rand )) -}}
+{{- $attributes := .Attributes |jsonify  -}}
+
 <div  id="{{$id}}" class="sc-main-wrapper">
-<script>
+{{ `<script>` | safeHTML }}
+
 (() =>{
   setTimeout(()=>{
-const sch = new StepchartDisplay("{{$id}}", "{{ $content }}", {{ .Attributes |jsonify }});
+  const content = `{{ $content }}`;
+const sch = new StepchartDisplay("{{$id}}", content, {{ $attributes }} );
   }, 1000);
 })();
 
-</script>
+{{ `</script>` | safeHTML }}
 </div>
