@@ -33,6 +33,7 @@ export class StepchartDisplay
 
   public layout: StageLayout;
   public rowSpacing: number;
+  public beatSpacing: number;
   public containerHeight: number;
   public rows: Row[] = [];
 
@@ -63,7 +64,8 @@ export class StepchartDisplay
 
     this.layout = LAYOUT[this.stepsType];
     this.rowSpacing = this.size * this.xmod * (DEFAULT_QUANTIZATION / this.quantization);
-    
+    this.beatSpacing = this.size * this.xmod;
+
     this.rows = parseStepchart(stepchart, this.quantization, MAX_QUANTIZATION, DEFAULT_QUANTIZATION, this.layout);
 
     if (this.maxVisibleRows == 0)
@@ -104,7 +106,7 @@ export class StepchartDisplay
     if (this.animate)
     {
 
-      this.animationTimeline = buildStageAnimation(this.rows, this.layout, this.size, this.stageArrowSize, 60, this.chart, this.leftFootElem, this.rightFootElem);
+      this.animationTimeline = buildStageAnimation(this.rows, this.layout, this.size, this.stageArrowSize, 60, this.xmod, this.chart, this.leftFootElem, this.rightFootElem);
       console.log(this.animationTimeline);
       this.animationTimeline.play();
     }
@@ -177,7 +179,7 @@ export class StepchartDisplay
 
     let direction = this.layout.layout[note.column].direction;
     let left = this.size * note.column;
-    let top = this.rowSpacing * rowIndex;
+    let top = (this.beatSpacing * beat) - (this.size);
 
     let noteElem = this.createElement("sc-arrow", direction, `beat-subdivision-${subdivision}`, `note-type-${note.type}`);
     noteElem.setAttribute("data-beat", beat.toPrecision(4));

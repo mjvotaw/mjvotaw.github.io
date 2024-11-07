@@ -58,7 +58,7 @@ export function parseStepchart(stepchart: string, quantization: number, maxQuant
   {
     let row: Row = {
       notes: [],
-      beat: rows.length * beatsPerRow
+      beat: (rows.length * beatsPerRow) + 1,
     };
 
     line = line.trim();

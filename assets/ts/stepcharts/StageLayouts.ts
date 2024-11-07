@@ -44,14 +44,27 @@ export class StageLayout {
   // left and right feet and the x-axis.
   // This value can inform us on the degree of turning, but 
   // not which way the player is turned
-  getFacingDirectionCosine(leftIndex: number, rightIndex: number) {
-    if (leftIndex == rightIndex) return 0
-    let dx = this.layout[rightIndex].x - this.layout[leftIndex].x
-    const dy = this.layout[rightIndex].y - this.layout[leftIndex].y
+  getFacingDirectionCosine(left: BaseStagePoint, right: BaseStagePoint) {
+    if (left.x == right.x && left.y == right.y) return 0;
+
+    let dx = right.x - left.x
+    const dy = right.y - left.y
 
     const distance = Math.sqrt(dx * dx + dy * dy)
     dx /= distance
     return dx
+  }
+
+  getFacingDirectionSine(left: BaseStagePoint, right: BaseStagePoint)
+  {
+    if (left.x == right.x && left.y == right.y) return 0;
+
+    let dx = right.x - left.x
+    let dy = right.y - left.y
+
+    const distance = Math.sqrt(dx * dx + dy * dy)
+    dy /= distance
+    return dy
   }
 
   getYDifference(leftIndex: number, rightIndex: number) {
@@ -72,7 +85,7 @@ export class StageLayout {
   }
 
   averagePoint(leftIndex: number, rightIndex: number) {
-    if (leftIndex == -1 && rightIndex == -1) return { x: 0, y: 0 }
+    if (leftIndex == -1 && rightIndex == -1) return { x: -1, y: -1 }
     if (leftIndex == -1) return this.layout[rightIndex]
     if (rightIndex == -1) return this.layout[leftIndex]
     return {
