@@ -1,6 +1,7 @@
-import { buildStageAnimation } from "./StageAnimation";
+import { buildFootAnimations, buildStepchartAnimation } from "./StepchartAnimation";
 import { LAYOUT, StageLayout, StagePoint } from "./StageLayouts";
 import { parseStepchart, NoteType, FootPart, Note, Row } from "./Stepchart";
+import { BodyPosition, calculateFeetPositions, FootPosition } from "./FootPosition";
 
 interface Attributes
 {
@@ -9,6 +10,7 @@ interface Attributes
   maxvisiblerows?: number;
   size?: number;
   xmod?: number;
+  bpm?: number;
   animate?: boolean;
   showstage?: boolean;
 }
@@ -27,6 +29,7 @@ export class StepchartDisplay
   public maxVisibleRows: number;
   public size: number;
   public xmod: number;
+  public bpm: number;
   public animate: boolean;
   public showStage: boolean;
   public stageArrowSize: number;
@@ -58,6 +61,7 @@ export class StepchartDisplay
     this.maxVisibleRows = attributes.maxvisiblerows ?? 0;
     this.size = attributes.size ?? 64;
     this.xmod = attributes.xmod ?? 1;
+    this.bpm = attributes.bpm ?? 120;
     this.animate = attributes.animate ?? false;
     this.showStage = attributes.showstage ?? false;
     this.stageArrowSize = Math.round(this.size * 0.75);
@@ -92,25 +96,48 @@ export class StepchartDisplay
     this.chart = body;
     this.chartContainer.appendChild(body);
 
-    wrapper.appendChild(this.chartContainer);
+    this.wrapper.appendChild(this.chartContainer);
+
+
+
+    if (this.animate)
+    {
+      this.animationTimeline = buildStepchartAnimation(this.rows, this.size, this.bpm, this.xmod, this.chart);
+    }
 
     if (this.showStage)
     {
       console.log('StepchartDisplay:: yeah Im building the stage');
       this.stageContainer = this.buildStage();
-      wrapper.appendChild(this.stageContainer);
+      this.wrapper.appendChild(this.stageContainer);
       this.leftFootElem = this.stageContainer.querySelector(".sc-foot.left");
       this.rightFootElem = this.stageContainer.querySelector(".sc-foot.right");
-    } 
+      
+      if (this.animate)
+      {
+        buildFootAnimations(this.rows, this.layout, this.stageArrowSize, this.bpm, this.animationTimeline, this.leftFootElem, this.rightFootElem);
+      }
+      else
+      {
+        let initialPosition: BodyPosition = {
+          left: { ...this.layout.startingPositions.left, angle: 0, moved: false },
+          right: { ...this.layout.startingPositions.right, angle: 0, moved: false },
+          bodyAngle: 0,
+        };
 
+        let nextPosition = calculateFeetPositions(this.rows[0], this.layout, initialPosition);
+        this.setFootPosition(this.leftFootElem, nextPosition.left);
+        this.setFootPosition(this.rightFootElem, nextPosition.right);
+      }
+    }
+    
     if (this.animate)
     {
-
-      this.animationTimeline = buildStageAnimation(this.rows, this.layout, this.size, this.stageArrowSize, 60, this.xmod, this.chart, this.leftFootElem, this.rightFootElem);
-      console.log(this.animationTimeline);
       this.animationTimeline.play();
     }
+    
   }
+
 
 
 
@@ -276,6 +303,15 @@ export class StepchartDisplay
     foot.style.setProperty("left", `${left}px`);
     foot.style.setProperty("bottom", `${bottom}px`);
     return foot;
+  }
+
+  private setFootPosition(foot: HTMLDivElement, position: FootPosition)
+  {
+    let left = position.x * this.stageArrowSize;
+    let bottom = position.y * this.stageArrowSize;
+    foot.style.setProperty("left", `${left}px`);
+    foot.style.setProperty("bottom", `${bottom}px`);
+    foot.style.setProperty("transform", `rotate(${position.angle}deg)`);
   }
   
 

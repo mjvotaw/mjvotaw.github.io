@@ -7,12 +7,32 @@ title: Predicting Foot Placement for 4-Panel Dance Game Step Charts
 
 <<< Hey there's a stepchart here >>>
 
-```stepchart {{showstage=true quantization=8 animate=true}}
+```stepchart {{showstage=true quantization=8 animate=true maxvisiblerows=4 xmod=2 }}
 
+1010 Ll
+0001 R
 0100 L
-2010 LR
-00M0
-3101 LRr
+0100 R
+1000 L
+0002 R
+1000 L
+0000
+0000 
+0003 R
+0100 R
+0010 L
+0001 R
+0100 L
+0010 R
+1000 L
+0100 R
+
+1000 L
+0010 R
+0001 L
+1000 R
+0100 L
+0001 R
 
 ```
 
@@ -85,7 +105,7 @@ With a single bracketable jump, we now have 6 possible foot placements:
 <div class="row">
 <div class="col">
 
-```stepchart {size=32}
+```stepchart {size=32 showstage=true}
 
 0101 Ll
 ```
