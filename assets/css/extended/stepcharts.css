@@ -293,6 +293,11 @@
   z-index: 2;
 }
 
+.sc-foot.hidden-foot
+{
+  display: none;
+}
+
 .sc-foot.left
 {
   background-image: url('/images/stepcharts/left-foot.png');

@@ -13,6 +13,8 @@ interface Attributes
   bpm?: number;
   animate?: boolean;
   showstage?: boolean;
+  hideleftfoot?: boolean;
+  hiderightfoot?: boolean;
 }
 
 const MAX_QUANTIZATION = 16;
@@ -32,6 +34,9 @@ export class StepchartDisplay
   public bpm: number;
   public animate: boolean;
   public showStage: boolean;
+  public hideLeftFoot: boolean;
+  public hideRightFoot: boolean;
+
   public stageArrowSize: number;
 
   public layout: StageLayout;
@@ -64,6 +69,9 @@ export class StepchartDisplay
     this.bpm = attributes.bpm ?? 120;
     this.animate = attributes.animate ?? false;
     this.showStage = attributes.showstage ?? false;
+    this.hideLeftFoot = attributes.hideleftfoot ?? false;
+    this.hideRightFoot = attributes.hiderightfoot ?? false;
+
     this.stageArrowSize = Math.round(this.size * 0.75);
 
     this.layout = LAYOUT[this.stepsType];
@@ -133,6 +141,7 @@ export class StepchartDisplay
     
     if (this.animate)
     {
+      console.log('build animation: ', this.animationTimeline);
       this.animationTimeline.play();
     }
     
@@ -279,8 +288,19 @@ export class StepchartDisplay
     let leftFoot = this.createFoot("left", this.layout.startingPositions.left);
     let rightFoot = this.createFoot("right", this.layout.startingPositions.right);
 
+    
     stage.appendChild(leftFoot);
     stage.appendChild(rightFoot);
+
+    if (this.hideLeftFoot)
+    {
+      leftFoot.classList.add("hidden-foot"); 
+    }
+    
+    if (this.hideRightFoot)
+    {
+      rightFoot.classList.add("hidden-foot");
+    }
     return stage;
   }
 
