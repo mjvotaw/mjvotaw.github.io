@@ -67,6 +67,22 @@ export class StageLayout {
     return dy
   }
 
+  calculateAngle(p1: BaseStagePoint, p2: BaseStagePoint)
+  {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+
+    let angle = Math.atan2(dx, dy) * (180 / Math.PI);
+    
+    if (angle < 0)
+    {
+      angle += 360;
+    }
+
+    return angle;
+
+  }
+
   getYDifference(leftIndex: number, rightIndex: number) {
     if (leftIndex == rightIndex) return 0
     const dx = this.layout[rightIndex].x - this.layout[leftIndex].x

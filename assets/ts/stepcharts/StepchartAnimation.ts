@@ -108,6 +108,7 @@ export function buildFootAnimations(rows: Row[], layout: StageLayout, stageArrow
 
 function setFootPosition(foot: HTMLDivElement, previousPosition: FootPosition, nextPosition: FootPosition, duration: number, delay: number, stageArrowSize: number, timeline: any)
 {
+
   timeline.add({
     targets: [foot],
     easing: 'linear',
@@ -122,7 +123,7 @@ function setFootPosition(foot: HTMLDivElement, previousPosition: FootPosition, n
     easing: 'easeOutQuad',
     duration: duration / 2,
     scale: FOOT_LIFT_SCALE,
-    rotate: -1 * intermediateAngle,
+    rotate: intermediateAngle,
   }, delay);
 
   timeline.add({
@@ -130,7 +131,7 @@ function setFootPosition(foot: HTMLDivElement, previousPosition: FootPosition, n
     easing: 'easeInQuad',
     duration: duration / 2,
     scale: 1,
-    rotate: -1 * nextPosition.angle
+    rotate: nextPosition.angle
   }, delay + (duration / 2));
 
 }

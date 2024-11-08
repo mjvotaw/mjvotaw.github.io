@@ -60,12 +60,8 @@ export function calculateFeetPositions(row: Row, layout: StageLayout, previousPo
     rightFootPosition = lastRightPosition;
   }
 
-  let facingSine = layout.getFacingDirectionSine(leftFootPosition, rightFootPosition);
-  let bodyAngle = Math.round(Math.asin(facingSine) * (180 / Math.PI));
+  let bodyAngle = layout.calculateAngle(leftFootPosition, rightFootPosition);
   
-  bodyAngle = lerp(lastBodyAngle, bodyAngle, 0.5);
-  newPosition.left.angle = bodyAngle;
-  newPosition.right.angle = bodyAngle;
   newPosition.bodyAngle = bodyAngle;
 
   newPosition.left = determineNexFootPosition(row, footColumns[FootPart.LeftHeel], footColumns[FootPart.LeftToe], bodyAngle, layout, lastLeftPosition, "left");
@@ -80,20 +76,22 @@ function determineNexFootPosition(row: Row, heelColumn: number, toeColumn: numbe
   {
     return previousPosition;
   }
+  // The feet are pretty much always going to be perpendicular to the body, so subtract 90 degrees
+  let footAngle = bodyAngle - 90;
   
-  let nextPosition: FootPosition = { x: layout.layout[heelColumn].x, y: layout.layout[heelColumn].y, angle: bodyAngle, moved: true };
+  let nextPosition: FootPosition = { x: layout.layout[heelColumn].x, y: layout.layout[heelColumn].y, angle: footAngle, moved: true };
 
-  const holdTypesToIgnore: NoteType[] = [NoteType.HoldBody, NoteType.RollBody, NoteType.HoldTail];
-
+  // If we're bracketing something, then the foot's position and angle need to change so that it will touch both arrows
   if (toeColumn != -1)
   {
     let bracketPosition = layout.averagePoint(heelColumn, toeColumn);
     nextPosition.x = bracketPosition.x;
     nextPosition.y = bracketPosition.y;
-    let footAngle = getBracketAngle(layout.layout[heelColumn], layout.layout[toeColumn]);
+    footAngle = layout.calculateAngle(layout.layout[heelColumn], layout.layout[toeColumn]);
     console.log(`Previous foot angle: ${nextPosition.angle}, bracket angle: ${footAngle}`);
     nextPosition.angle = footAngle;
   }
+  // Otherwise, apply some slight modifications to the position to make the placement feel a little more natural
   else
   {
     if (whichFoot == "left")
@@ -110,10 +108,32 @@ function determineNexFootPosition(row: Row, heelColumn: number, toeColumn: numbe
     }
   }
 
+  // Once we've calculated the new position, we need to check if this arrow is actually a hold
+  // if we haven't actually moved anything, then we want to prevent an animation of the foot moving up and down
+  const holdTypesToIgnore: NoteType[] = [NoteType.HoldBody, NoteType.RollBody, NoteType.HoldTail];
   if (holdTypesToIgnore.includes(row.notes[heelColumn].type) && isEqual(previousPosition, nextPosition))
   {
     return previousPosition;
   }
+
+  // In order to make the change in angle look better, we need to figure out the correct direction for the foot to turn
+  // Positive numbers will cause things to rotate clockwise, and negative to rotate counter-clockwise
+  // So we need to determine which direction results in less movement
+  let previousAngle = previousPosition.angle;
+  if (footAngle < 0)
+  {
+    footAngle += 360;
+  }
+  let distanceToPositive = Math.abs(previousAngle - footAngle);
+  footAngle -= 360;
+  let distanceToNegative = Math.abs(previousAngle - footAngle);
+  
+  if (distanceToPositive < distanceToNegative)
+  {
+    footAngle += 360;
+  }
+
+  nextPosition.angle = footAngle;
 
   return nextPosition;
 }
@@ -165,19 +185,6 @@ function modifyRightFootPosition(column: number, layout: StageLayout)
 
   return newPosition;
 }
-
-// TODO: Check that this gives valid angles for brackets!
-
-function getBracketAngle(p1: BaseStagePoint, p2: BaseStagePoint): number {
-  if (p1.y == p2.y) {
-    return 0
-  }
-
-  const dy = p2.y - p1.y
-  const dx = p2.x - p1.x
-  let rads = Math.atan2(dy, dx) - Math.PI * 0.5;
-  return Math.round(rads * (180 / Math.PI));
-} 
 
 function isEqual(p1: BaseStagePoint, p2: BaseStagePoint)
 {
