@@ -100,10 +100,10 @@ export class StageLayout {
     return dy
   }
 
-  averagePoint(leftIndex: number, rightIndex: number) {
+  averagePoint(leftIndex: number, rightIndex: number): BaseStagePoint {
     if (leftIndex == -1 && rightIndex == -1) return { x: -1, y: -1 }
-    if (leftIndex == -1) return this.layout[rightIndex]
-    if (rightIndex == -1) return this.layout[leftIndex]
+    if (leftIndex == -1) return { x: this.layout[rightIndex].x, y: this.layout[rightIndex].y };
+    if (rightIndex == -1) return { x: this.layout[leftIndex].x, y: this.layout[leftIndex].y };
     return {
       x: (this.layout[leftIndex].x + this.layout[rightIndex].x) / 2,
       y: (this.layout[leftIndex].y + this.layout[rightIndex].y) / 2,
@@ -130,6 +130,11 @@ export class StageLayout {
     const dot = x1 * x2 + y1 * y2
     const det = x1 * y2 - y1 * x2
     return Math.atan2(det, dot)
+  }
+
+  arePointsEqual(p1: BaseStagePoint, p2: BaseStagePoint)
+  {
+    return p1.x == p2.x && p1.y == p2.y;
   }
 }
 

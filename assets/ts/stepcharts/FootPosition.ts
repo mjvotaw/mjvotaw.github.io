@@ -2,7 +2,7 @@ import { StageLayout, BaseStagePoint } from "./StageLayouts";
 import { FootPart, Note, NoteType, Row } from "./Stepchart";
 import { lerp } from "./maths";
 
-const FOOT_Y_MOD = 0.5;
+const FOOT_Y_MOD = 0.3;
 const FOOT_X_MOD = 0.3;
 
 export interface BodyPosition
@@ -14,8 +14,9 @@ export interface BodyPosition
 
 export interface FootPosition
 {
-  x: number;
-  y: number;
+  location: BaseStagePoint;
+  heel: BaseStagePoint;
+  toe?: BaseStagePoint;
   angle: number;
   moved: boolean;
 }
@@ -48,19 +49,19 @@ export function calculateFeetPositions(row: Row, layout: StageLayout, previousPo
     }
   }
 
-  let leftFootPosition = layout.averagePoint(footColumns[FootPart.LeftHeel], footColumns[FootPart.LeftToe]);
-  let rightFootPosition = layout.averagePoint(footColumns[FootPart.RightHeel], footColumns[FootPart.RightToe]);
+  let leftFootLocation = layout.averagePoint(footColumns[FootPart.LeftHeel], footColumns[FootPart.LeftToe]);
+  let rightFootLocation = layout.averagePoint(footColumns[FootPart.RightHeel], footColumns[FootPart.RightToe]);
 
-  if (leftFootPosition.x == -1)
+  if (leftFootLocation.x == -1)
   {
-    leftFootPosition = lastLeftPosition;
+    leftFootLocation = lastLeftPosition.location;
   }
-  if (rightFootPosition.x == -1)
+  if (rightFootLocation.x == -1)
   {
-    rightFootPosition = lastRightPosition;
+    rightFootLocation = lastRightPosition.location;
   }
 
-  let bodyAngle = layout.calculateAngle(leftFootPosition, rightFootPosition);
+  let bodyAngle = layout.calculateAngle(leftFootLocation, rightFootLocation);
   
   newPosition.bodyAngle = bodyAngle;
 
@@ -70,50 +71,86 @@ export function calculateFeetPositions(row: Row, layout: StageLayout, previousPo
   return newPosition;
 }
 
+export function initFootPosition(location: BaseStagePoint)
+{
+  let footPosition: FootPosition = {
+    location: { x: location.x, y: location.y },
+    heel: { x: location.x, y: location.y },
+    angle: 0,
+    moved: false
+  };
+  return footPosition;
+}
+
+
 function determineNexFootPosition(row: Row, heelColumn: number, toeColumn: number, bodyAngle: number, layout: StageLayout, previousPosition: FootPosition, whichFoot: string)
 {
   if (heelColumn == -1)
   {
-    return previousPosition;
+    return { ...previousPosition };
   }
-  // The feet are pretty much always going to be perpendicular to the body, so subtract 90 degrees
-  let footAngle = bodyAngle - 90;
-  
-  let nextPosition: FootPosition = { x: layout.layout[heelColumn].x, y: layout.layout[heelColumn].y, angle: footAngle, moved: true };
 
+  let heelLocation = layout.layout[heelColumn];
+  let toeLocation = toeColumn > -1 ? layout.layout[toeColumn] : undefined;
+  
+  let nextLocation = determineNextFootLocation(row, previousPosition.location, heelColumn, toeColumn, layout, whichFoot);
+  let nextAngle = deterimineFootAngle(previousPosition, nextLocation, heelLocation, toeLocation, bodyAngle, layout);
+
+  let nextPosition: FootPosition = { location: nextLocation, heel: heelLocation, toe: toeLocation, angle: nextAngle, moved: true };
+  
+  return nextPosition;
+}
+
+function determineNextFootLocation(row: Row, previousLocation: BaseStagePoint, heelColumn: number, toeColumn: number, layout: StageLayout, whichFoot: string)
+{
+  let nextLocation = { ...previousLocation };
   // If we're bracketing something, then the foot's position and angle need to change so that it will touch both arrows
   if (toeColumn != -1)
-  {
-    let bracketPosition = layout.averagePoint(heelColumn, toeColumn);
-    nextPosition.x = bracketPosition.x;
-    nextPosition.y = bracketPosition.y;
-    footAngle = layout.calculateAngle(layout.layout[heelColumn], layout.layout[toeColumn]);
-    console.log(`Previous foot angle: ${nextPosition.angle}, bracket angle: ${footAngle}`);
-    nextPosition.angle = footAngle;
-  }
-  // Otherwise, apply some slight modifications to the position to make the placement feel a little more natural
-  else
-  {
-    if (whichFoot == "left")
     {
-      let leftFootPosition = modifyLeftFootPosition(heelColumn, layout);
-      nextPosition.x = leftFootPosition.x;
-      nextPosition.y = leftFootPosition.y;
+      let bracketLocation = layout.averagePoint(heelColumn, toeColumn);
+      nextLocation = bracketLocation;
     }
-    else if (whichFoot == "right")
+    // Otherwise, apply some slight modifications to the location to make the placement feel a little more natural
+    else
     {
-      let rightFootPosition = modifyRightFootPosition(heelColumn, layout);
-      nextPosition.x = rightFootPosition.x;
-      nextPosition.y = rightFootPosition.y;
-    }
+      if (whichFoot == "left")
+      {
+        let leftFootLocation = modifyLeftFootLocation(heelColumn, layout);
+        nextLocation = leftFootLocation
+      }
+      else if (whichFoot == "right")
+      {
+        let rightFootLocation = modifyRightFootLocation(heelColumn, layout);
+        nextLocation = rightFootLocation;
+      }
   }
-
-  // Once we've calculated the new position, we need to check if this arrow is actually a hold
+  
+  // Once we've calculated the new location, we need to check if this arrow is actually a hold
   // if we haven't actually moved anything, then we want to prevent an animation of the foot moving up and down
   const holdTypesToIgnore: NoteType[] = [NoteType.HoldBody, NoteType.RollBody, NoteType.HoldTail];
-  if (holdTypesToIgnore.includes(row.notes[heelColumn].type) && isEqual(previousPosition, nextPosition))
+  if (holdTypesToIgnore.includes(row.notes[heelColumn].type) && layout.arePointsEqual(previousLocation, nextLocation))
   {
-    return previousPosition;
+    return previousLocation;
+  }
+
+  return nextLocation;
+}
+
+function deterimineFootAngle(previousPosition: FootPosition, nextLocation: BaseStagePoint, heel: BaseStagePoint, toe: BaseStagePoint | undefined, bodyAngle: number, layout: StageLayout)
+{
+  // If the foot isn't moving to a new arrow, just return the same angle.
+  // It looks weird when it moves around a bunch
+  if (layout.arePointsEqual(previousPosition.location, nextLocation))
+  {
+    return previousPosition.angle;
+  }
+
+  // The feet are pretty much always going to be perpendicular to the body, so subtract 90 degrees
+  let footAngle = bodyAngle - 90;
+
+  if (toe != undefined)
+  {
+    footAngle = layout.calculateAngle(heel, toe);
   }
 
   // In order to make the change in angle look better, we need to figure out the correct direction for the foot to turn
@@ -133,60 +170,54 @@ function determineNexFootPosition(row: Row, heelColumn: number, toeColumn: numbe
     footAngle += 360;
   }
 
-  nextPosition.angle = footAngle;
-
-  return nextPosition;
+  return footAngle;
 }
 
-
-function modifyLeftFootPosition(column: number, layout: StageLayout)
+function modifyLeftFootLocation(column: number, layout: StageLayout): BaseStagePoint
 {
-  
-  let newPosition = { ...layout.layout[column] };
+  let stagePoint = layout.layout[column];
+  let newLocation = { x: stagePoint.x, y: stagePoint.y };
 
   if (layout.upArrows.includes(column))
   {
-    newPosition.y = newPosition.y - FOOT_Y_MOD;
-    newPosition.x = newPosition.x - FOOT_X_MOD;
+    newLocation.y = newLocation.y - FOOT_Y_MOD;
+    newLocation.x = newLocation.x - FOOT_X_MOD;
   }
   else if (layout.downArrows.includes(column))
   {
-    newPosition.y = newPosition.y + FOOT_Y_MOD;
-    newPosition.x = newPosition.x - FOOT_X_MOD;
+    newLocation.y = newLocation.y + FOOT_Y_MOD;
+    newLocation.x = newLocation.x - FOOT_X_MOD;
   }
 
-  if (newPosition.direction == "left")
+  if (stagePoint.direction == "left")
   {
-    newPosition.x = newPosition.x + FOOT_X_MOD;
+    newLocation.x = newLocation.x + FOOT_X_MOD;
   }
 
-  return newPosition;
+  return newLocation;
 }
 
-function modifyRightFootPosition(column: number, layout: StageLayout)
+function modifyRightFootLocation(column: number, layout: StageLayout): BaseStagePoint
 {
-  let newPosition = { ...layout.layout[column] };
+  let stagePoint = layout.layout[column];
+  let newLocation = { x: stagePoint.x, y: stagePoint.y };
 
   if (layout.upArrows.includes(column))
   {
-    newPosition.y = newPosition.y - FOOT_Y_MOD;
-    newPosition.x = newPosition.x + FOOT_X_MOD;
+    newLocation.y = newLocation.y - FOOT_Y_MOD;
+    newLocation.x = newLocation.x + FOOT_X_MOD;
   }
   else if (layout.downArrows.includes(column))
   {
-    newPosition.y = newPosition.y + FOOT_Y_MOD;
-    newPosition.x = newPosition.x + FOOT_X_MOD;
+    newLocation.y = newLocation.y + FOOT_Y_MOD;
+    newLocation.x = newLocation.x + FOOT_X_MOD;
   }
 
-  if (newPosition.direction == "right")
+
+  if (stagePoint.direction == "right")
   {
-    newPosition.x = newPosition.x - FOOT_X_MOD;
+    newLocation.x = newLocation.x - FOOT_X_MOD;
   }
 
-  return newPosition;
-}
-
-function isEqual(p1: BaseStagePoint, p2: BaseStagePoint)
-{
-  return p1.x == p2.x && p1.y == p2.y;
+  return newLocation;
 }

@@ -245,6 +245,16 @@
   position: absolute;
 }
 
+.sc-stage-arrow-flash
+{
+  width: var(--stage-arrow-size);
+  height: var(--stage-arrow-size);
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  background-color: #ffffff;
+  opacity: 0;
+}
 
 .sc-stage-arrow.left
 {

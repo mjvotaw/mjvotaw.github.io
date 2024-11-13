@@ -1,7 +1,7 @@
-import { buildFootAnimations, buildStepchartAnimation } from "./StepchartAnimation";
+import { buildFootAnimations, buildStageAnimations, buildStepchartAnimation } from "./StepchartAnimation";
 import { LAYOUT, StageLayout, StagePoint } from "./StageLayouts";
 import { parseStepchart, NoteType, FootPart, Note, Row } from "./Stepchart";
-import { BodyPosition, calculateFeetPositions, FootPosition } from "./FootPosition";
+import { BodyPosition, calculateFeetPositions, FootPosition, initFootPosition } from "./FootPosition";
 
 interface Attributes
 {
@@ -15,6 +15,7 @@ interface Attributes
   showstage?: boolean;
   hideleftfoot?: boolean;
   hiderightfoot?: boolean;
+  autoplay?: boolean;
 }
 
 const MAX_QUANTIZATION = 16;
@@ -36,6 +37,7 @@ export class StepchartDisplay
   public showStage: boolean;
   public hideLeftFoot: boolean;
   public hideRightFoot: boolean;
+  public autoplay: boolean;
 
   public stageArrowSize: number;
 
@@ -50,6 +52,7 @@ export class StepchartDisplay
   private chartContainer?: HTMLDivElement;
   private chart: HTMLDivElement;
   private stageContainer?: HTMLDivElement;
+  private stageArrows: HTMLDivElement[] = [];
   private leftFootElem: HTMLDivElement;
   private rightFootElem: HTMLDivElement;
 
@@ -71,6 +74,7 @@ export class StepchartDisplay
     this.showStage = attributes.showstage ?? false;
     this.hideLeftFoot = attributes.hideleftfoot ?? false;
     this.hideRightFoot = attributes.hiderightfoot ?? false;
+    this.autoplay = attributes.autoplay ?? true;
 
     this.stageArrowSize = Math.round(this.size * 0.75);
 
@@ -124,12 +128,14 @@ export class StepchartDisplay
       if (this.animate)
       {
         buildFootAnimations(this.rows, this.layout, this.stageArrowSize, this.bpm, this.animationTimeline, this.leftFootElem, this.rightFootElem);
+
+        buildStageAnimations(this.rows, this.layout, this.bpm, this.animationTimeline, this.stageArrows);
       }
       else
       {
         let initialPosition: BodyPosition = {
-          left: { ...this.layout.startingPositions.left, angle: 0, moved: false },
-          right: { ...this.layout.startingPositions.right, angle: 0, moved: false },
+          left: initFootPosition(this.layout.startingPositions.left),
+          right: initFootPosition(this.layout.startingPositions.right),
           bodyAngle: 0,
         };
 
@@ -139,16 +145,37 @@ export class StepchartDisplay
       }
     }
     
-    if (this.animate)
+    if (this.animate && this.autoplay)
     {
-      console.log('build animation: ', this.animationTimeline);
       this.animationTimeline.play();
     }
     
   }
 
 
+  public play()
+  {
+    if (this.animate && this.animationTimeline)
+    {
+      this.animationTimeline.play();
+    }
+  }
 
+  public pause()
+  {
+    if (this.animate && this.animationTimeline)
+      {
+        this.animationTimeline.pause();
+      }
+  }
+
+  public restart()
+  {
+    if (this.animate && this.animationTimeline)
+    {
+      this.animationTimeline.restart();
+    }
+  }
 
   private buildChartContainer()
   {
@@ -282,6 +309,7 @@ export class StepchartDisplay
     {
         let sp = this.layout.layout[c];
       let arrow = this.createStageArrow(sp, c);
+      this.stageArrows.push(arrow);
       stage.appendChild(arrow);
     }
 
@@ -312,6 +340,9 @@ export class StepchartDisplay
     let bottom = sp.y * this.stageArrowSize;
     arrow.style.setProperty("left", `${left}px`);
     arrow.style.setProperty("bottom", `${bottom}px`);
+
+    let arrowFlash = this.createElement("sc-stage-arrow-flash");
+    arrow.appendChild(arrowFlash);
     return arrow;
   }
 
@@ -327,8 +358,8 @@ export class StepchartDisplay
 
   private setFootPosition(foot: HTMLDivElement, position: FootPosition)
   {
-    let left = position.x * this.stageArrowSize;
-    let bottom = position.y * this.stageArrowSize;
+    let left = position.location.x * this.stageArrowSize;
+    let bottom = position.location.y * this.stageArrowSize;
     foot.style.setProperty("left", `${left}px`);
     foot.style.setProperty("bottom", `${bottom}px`);
     foot.style.setProperty("transform", `rotate(${position.angle}deg)`);
