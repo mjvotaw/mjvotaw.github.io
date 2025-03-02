@@ -48,7 +48,7 @@ export class StepchartDisplay
   public rows: Row[] = [];
 
   public animationTimeline: any; // anime.js timeline
-  private wrapper: Element;
+  public wrapper: Element;
   private chartContainer?: HTMLDivElement;
   private chart: HTMLDivElement;
   private stageContainer?: HTMLDivElement;

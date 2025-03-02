@@ -50,10 +50,27 @@ In an ideal world, this will display foot placement on a dance stage when animat
 <div  id="{{$id}}" class="sc-main-wrapper">
 {{ `<script>` | safeHTML }}
 
+window.globalAnimationObserver = window.globalAnimationObserver || new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    const animationInstance = entry.target.animationInstance;
+    if (animationInstance) {
+      if (entry.isIntersecting) {
+        animationInstance.play();
+      } else {
+        animationInstance.pause();
+      }
+    }
+  });
+}, { threshold: 0.1 });
+
 (() =>{
   setTimeout(()=>{
   const content = `{{ $content }}`;
 const sch = new StepchartDisplay("{{$id}}", content, {{ $attributes }} );
+    let wrapper = sch.wrapper;
+    wrapper.animationInstance = sch;
+    window.globalAnimationObserver.observe(wrapper);
+    sch.pause();
   }, 1000);
 })();
 
