@@ -1,6 +1,6 @@
 import { buildFootAnimations, buildStageAnimations, buildStepchartAnimation } from "./StepchartAnimation";
 import { LAYOUT, StageLayout, StagePoint } from "./StageLayouts";
-import { parseStepchart, NoteType, FootPart, Note, Row } from "./Stepchart";
+import { StepchartParser, NoteType, FootPart, Note, Row } from "./Stepchart";
 import { BodyPosition, calculateFeetPositions, FootPosition, initFootPosition } from "./FootPosition";
 
 interface Attributes
@@ -63,6 +63,8 @@ export class StepchartDisplay
   )
   {
     console.log(typeof attributes);
+
+
     this.id = id;
     this.stepsType = attributes.stepstype ?? "dance-single";
     this.quantization = attributes.quantization ?? 4;
@@ -82,13 +84,21 @@ export class StepchartDisplay
     this.rowSpacing = this.size * this.xmod * (DEFAULT_QUANTIZATION / this.quantization);
     this.beatSpacing = this.size * this.xmod;
 
-    this.rows = parseStepchart(stepchart, this.quantization, MAX_QUANTIZATION, DEFAULT_QUANTIZATION, this.layout);
+
+    if (stepchart.includes("NOTES"))
+    {
+      this.rows = StepchartParser.parseSimfile(stepchart, MAX_QUANTIZATION, DEFAULT_QUANTIZATION, this.layout);
+    }
+    else
+    {
+      this.rows = StepchartParser.parseStepchart(stepchart, this.quantization, MAX_QUANTIZATION, DEFAULT_QUANTIZATION, this.layout);
+    }
 
     if (this.maxVisibleRows == 0)
     {
       this.maxVisibleRows = this.rows.length;
     }
-    this.containerHeight = (3 * this.size) + (this.maxVisibleRows * this.rowSpacing);
+    this.containerHeight = (2 * this.size) + (this.maxVisibleRows * this.rowSpacing);
 
     const wrapper = document.querySelector(`#${this.id}`);
     if (!wrapper)

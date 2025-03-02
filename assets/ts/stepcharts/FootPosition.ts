@@ -95,8 +95,15 @@ function determineNexFootPosition(row: Row, heelColumn: number, toeColumn: numbe
   
   let nextLocation = determineNextFootLocation(row, previousPosition.location, heelColumn, toeColumn, layout, whichFoot);
   let nextAngle = deterimineFootAngle(previousPosition, nextLocation, heelLocation, toeLocation, bodyAngle, layout);
-
   let nextPosition: FootPosition = { location: nextLocation, heel: heelLocation, toe: toeLocation, angle: nextAngle, moved: true };
+
+    // Once we've calculated the new location, we need to check if this arrow is actually a hold
+  // if we haven't actually moved anything, then we want to prevent an animation of the foot moving up and down
+  const holdTypesToIgnore: NoteType[] = [NoteType.HoldBody, NoteType.RollBody, NoteType.HoldTail];
+  if (holdTypesToIgnore.includes(row.notes[heelColumn].type) && layout.arePointsEqual(previousPosition.location, nextLocation))
+  {
+    nextPosition.moved = false;
+  }
   
   return nextPosition;
 }
@@ -123,14 +130,6 @@ function determineNextFootLocation(row: Row, previousLocation: BaseStagePoint, h
         let rightFootLocation = modifyRightFootLocation(heelColumn, layout);
         nextLocation = rightFootLocation;
       }
-  }
-  
-  // Once we've calculated the new location, we need to check if this arrow is actually a hold
-  // if we haven't actually moved anything, then we want to prevent an animation of the foot moving up and down
-  const holdTypesToIgnore: NoteType[] = [NoteType.HoldBody, NoteType.RollBody, NoteType.HoldTail];
-  if (holdTypesToIgnore.includes(row.notes[heelColumn].type) && layout.arePointsEqual(previousLocation, nextLocation))
-  {
-    return previousLocation;
   }
 
   return nextLocation;
