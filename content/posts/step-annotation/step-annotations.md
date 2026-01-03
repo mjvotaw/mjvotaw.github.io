@@ -1,5 +1,6 @@
 ---
 draft: false
+date: 2025-03-02
 params:
   author: Mike Votaw
 title: Predicting Foot Placement for 4-Panel Dance Games

@@ -1,5 +1,5 @@
 ---
-draft: true
+draft: false
 date: 2025-12-15T00:57:30
 params:
   author: Mike Votaw
@@ -124,9 +124,9 @@ Someone also built a tool for scraping song info from a number of rhythm game we
 
 There are a number of models out there trained to predict music genres, but they're mostly academic exercises that aren't terribly accurate.
 
-[Essentia](https://essentia.upf.edu/) offers several models that are trained on millions of songs based on a dataset from Discogs. This seems to be the best one out there. I need to do some testing to compare it's choices to "known" genres pulled from things like Discogs and last.fm.
+One model that I found that looked somewhat promising is from[Essentia](https://essentia.upf.edu/). They offer several models that are trained on millions of songs based on a dataset from Discogs. My initial tests weren't too promising, though. It seems to provide a lot of equally-likely results, which makes it hard to choose a single result with confidence. This isn't too surprising, I mean especially with dance music, there's a _lot_ of stylistic overlap between genres.
 
-I think a big part of the problem with trying to predict genres is that music, and dance music in particular, often doesn't fit neatly into just one genre.
+And it's not exactly quick. This isn't something that I'd be able to package into an application for end-users.
 
 
 
